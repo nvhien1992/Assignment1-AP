@@ -5,7 +5,7 @@ static errno_t readline_into_buffer(const char *file, void *buff);
 
 static errno_t runcmd_shell(const char *format, ...) {
 	char cmd_buff[1024];
-	va_list va_args;
+	va_list args;
 
 	va_start(args, format);
 	if (vsprintf(cmd_buff, format, args) < 0) {
@@ -25,6 +25,7 @@ static errno_t readline_into_buffer(const char *file, void *buff) {
 	FILE *fp;
 
 	fp = fopen(file, "r");
+	
 }
 
 
@@ -35,7 +36,7 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 		return PARAM_INVALID;
 	}
 
-	if (access(fi_path) != F_OK) {
+	if (access(fi_path, F_OK) != 0) {
 		return FILE_NOT_FOUND;
 	}
 
@@ -57,6 +58,9 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 		return retval;
 	}
 
+	
+
+	return retval;
 }
 
 errno_t writer(const char *fo_path, data_output_t *data_out_s) {

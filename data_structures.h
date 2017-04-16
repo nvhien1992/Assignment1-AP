@@ -32,7 +32,7 @@ typedef struct {
 	float b_factor;
 	float forecast_err_mean;
 	float *chart_buff;
-} learning_ouput_t;
+} learning_output_t;
 
 typedef struct {
 	learning_output_t *lrning_oput_buff;
