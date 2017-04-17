@@ -45,7 +45,6 @@ static errno_t get_params(const char *file, train_params_t *params) {
 
 static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	FILE *fp;
-	char line[256];
 	int num_samples = 0;
 
 	fp = fopen(file, "r");
@@ -54,29 +53,30 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 		return OPEN_FILE_FAILED;
 	}
 
-	fgets(line, sizeof(line), fp);
-	sscanf(line, "%d\n", &num_samples);
+	fscanf(fp, "%d\n", &num_samples);
 	data->num_samples = num_samples;
 
 	data->x_data = (float*) malloc(sizeof(float)*num_samples);
 	data->t_data = (float*) malloc(sizeof(float)*num_samples);
 
 	num_samples = 0;
-	while (line[0] != '-') {
-		fgets(line, sizeof(line), fp);
-		sscanf(line, "%f\n", &data->x_data[num_samples]);
+	while (fscanf(fp, "%f\n", &data->x_data[num_samples]) != 0) {
 		num_samples++;
 	}
+	printf("%d\n", num_samples);
 	if (num_samples != data->num_samples) {
 		data->num_samples = -1;
 		return DATA_FATAL;
 	}
 
 	num_samples = 0;
-	while (fgets(line, sizeof(line), fp)) {
-		scanf(line, "%f\n", &data->t_data[num_samples]);
+	while (fscanf(fp, "%f\n", &data->t_data[num_samples]) != 0) {
 		num_samples++;
+		if (feof(fp)) {
+			break;
+		}
 	}
+	printf("%d\n", num_samples);
 	if (num_samples != data->num_samples) {
 		data->num_samples = -1;
 		return DATA_FATAL;
@@ -129,7 +129,7 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 	get_data_samples(".data.tmp", &data_in_s->data_samples);
 
 	int i = 0;
-	for (i=0; i<data_in_s->data_samples.num_samples; i++) {
+	for (i = 0; i < 10; i++) {
 		printf("%f %f\n", data_in_s->data_samples.x_data[i], data_in_s->data_samples.t_data[i]);
 	}
 
