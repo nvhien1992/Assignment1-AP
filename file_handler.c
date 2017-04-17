@@ -63,7 +63,6 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	while (fscanf(fp, "%f\n", &data->x_data[num_samples]) != 0) {
 		num_samples++;
 	}
-	printf("%d\n", num_samples);
 	if (num_samples != data->num_samples) {
 		data->num_samples = -1;
 		return DATA_FATAL;
@@ -76,7 +75,6 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 			break;
 		}
 	}
-	printf("%d\n", num_samples);
 	if (num_samples != data->num_samples) {
 		data->num_samples = -1;
 		return DATA_FATAL;
