@@ -17,8 +17,8 @@ typedef struct {
 
 typedef struct {
 	int num_samples;
-	float *x_buff;
-	float *t_buff;
+	float *x_data;
+	float *t_data;
 } data_samples_t;
 
 typedef struct {
@@ -31,7 +31,7 @@ typedef struct {
 	float a_factor;
 	float b_factor;
 	float forecast_err_mean;
-	float *chart_buff;
+	float *chart_data;
 } learning_output_t;
 
 typedef struct {

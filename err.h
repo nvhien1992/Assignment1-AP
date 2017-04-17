@@ -8,6 +8,9 @@ typedef enum {
 	CMD_FAILED,
 	PARAM_INVALID,
 	FILE_NOT_FOUND,
+	OPEN_FILE_FAILED,
+	PARSE_FAILED,
+	DATA_FATAL,
 } errno_t;
 
 #endif //__ERR_H
