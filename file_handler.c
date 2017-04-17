@@ -1,5 +1,8 @@
 #include "file_handler.h"
 
+#define DEBUG_EN 1
+#include "dbg.h"
+
 static errno_t runcmd_shell(const char *format, ...);
 static errno_t get_params(const char *file, train_params_t *params);
 static errno_t get_data_samples(const char *file, data_samples_t *data);
@@ -28,14 +31,14 @@ static errno_t get_params(const char *file, train_params_t *params) {
 
 	fp = fopen(file, "r");
 	if (!fp) {
-		printf("open file .params.tmp failed\n");
+		DEBUG("get_params: open file .params.tmp failed\n");
 		return OPEN_FILE_FAILED;
 	}
 
 	if (fscanf(fp, pattern, &params->num_iters, &params->learning_rate,
-		    &params->start_point_s.a, &params->start_point_s.b,
+		    &params->start_point.a, &params->start_point.b,
 		    &params->num_folds) == 0) {
-		printf("parse failed\n");
+		DEBUG("get_params: parse file failed\n");
 		fclose(fp);
 		return PARSE_FAILED;
 	}
@@ -49,13 +52,16 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 
 	fp = fopen(file, "r");
 	if (!fp) {
-		printf("open file .data.tmp failed\n");
+		DEBUG("get_data_samples: open file .data.tmp failed\n");
 		return OPEN_FILE_FAILED;
 	}
 
-	fscanf(fp, "%d\n", &num_samples);
+	if (fscanf(fp, "%d\n", &num_samples) == 0) {
+		return DATA_FATAL;
+	}
 	data->num_samples = num_samples;
 
+	// allocate mem for x_data and t_data
 	data->x_data = (float*) malloc(sizeof(float)*num_samples);
 	data->t_data = (float*) malloc(sizeof(float)*num_samples);
 
@@ -100,13 +106,11 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 	if (retval != SUCCESS) {
 		return retval;
 	}
-	get_params(".params.tmp", &data_in_s->trn_params);
-	printf("%.3f\n", data_in_s->trn_params.learning_rate);
 
-	// get num of samples
+	// get num of data samples
 	retval = runcmd_shell("sed -n '12,$p' %s | wc -l > .data.tmp", fi_path);
 
-	// get x data from input file and save to .data.tmp
+	// get x_data from input file and save to .data.tmp
 	retval = runcmd_shell("sed -n '12,$p' %s | awk '{print $1}' >> .data.tmp", fi_path);
 	if (retval != SUCCESS) {
 		return retval;
@@ -118,17 +122,18 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 		return retval;
 	}
 
-	// get t data from input file and save to another file
+	// get t_data from input file and append to .data.tmp
 	retval = runcmd_shell("sed -n '12,$p' %s | awk '{print $2}' >> .data.tmp", fi_path);
 	if (retval != SUCCESS) {
 		return retval;
 	}
 
+	get_params(".params.tmp", &data_in_s->trn_params);
+	DEBUG("learning_rate: %.3f\n", data_in_s->trn_params.learning_rate);
 	get_data_samples(".data.tmp", &data_in_s->data_samples);
-
 	int i = 0;
 	for (i = 0; i < 10; i++) {
-		printf("%f %f\n", data_in_s->data_samples.x_data[i], data_in_s->data_samples.t_data[i]);
+		DEBUG("%f %f\n", data_in_s->data_samples.x_data[i], data_in_s->data_samples.t_data[i]);
 	}
 
 	return retval;

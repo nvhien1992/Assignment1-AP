@@ -6,12 +6,14 @@
 
 // data structures for input
 typedef struct {
+	float a;
+	float b;
+} start_point_t;
+
+typedef struct {
 	int num_iters;
 	float learning_rate;
-	struct {
-		float a;
-		float b;
-	} start_point_s;
+	start_point_t start_point;
 	int num_folds;
 } train_params_t;
 
