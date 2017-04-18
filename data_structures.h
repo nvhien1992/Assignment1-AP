@@ -30,6 +30,11 @@ typedef struct {
 
 //data structures for output
 typedef struct {
+	float ga;
+	float gb;
+} grad_vector_t;
+
+typedef struct {
 	float a_factor;
 	float b_factor;
 	float forecast_err_mean;
