@@ -28,7 +28,7 @@ typedef struct {
 	data_samples_t data_samples;
 } data_input_t;
 
-//data structures for ouput
+//data structures for output
 typedef struct {
 	float a_factor;
 	float b_factor;
@@ -37,7 +37,8 @@ typedef struct {
 } learning_output_t;
 
 typedef struct {
-	learning_output_t *lrning_oput_buff;
+	int num_outputs;
+	learning_output_t *lrning_oput;
 } data_output_t;
 
 #endif //__DATA_STRUCTURE_H
