@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 
 	parser(file, &din);
 
-	gradient_descent(&din.trn_params.start_point, din.trn_params.num_iters, &din.data_samples, NULL);
+	gradient_descent(&din.trn_params.start_point, din.trn_params.num_iters, din.trn_params.learning_rate, &din.data_samples);
 
 	return 0;
 }

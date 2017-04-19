@@ -8,12 +8,12 @@
 typedef struct {
 	float a;
 	float b;
-} start_point_t;
+} factors_t;
 
 typedef struct {
 	int num_iters;
 	float learning_rate;
-	start_point_t start_point;
+	factors_t start_point;
 	int num_folds;
 } train_params_t;
 
@@ -35,9 +35,8 @@ typedef struct {
 } grad_vector_t;
 
 typedef struct {
-	float a_factor;
-	float b_factor;
-	float forecast_err_mean;
+	factors_t factors;
+	float fcast_err_mean;
 	float *chart_data;
 } learning_output_t;
 
