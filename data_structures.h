@@ -37,7 +37,7 @@ typedef struct {
 typedef struct {
 	factors_t factors;
 	float fcast_err_mean;
-	float *chart_data;
+	float *histogram;
 } learning_output_t;
 
 typedef struct {
