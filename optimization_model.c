@@ -5,7 +5,7 @@
 #define DEBUG_EN 1
 #include "dbg.h"
 
-#define NUM_BIN 10
+static const int NUM_BIN=10;
 
 static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em);
 
@@ -25,6 +25,7 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 	float err_mean = 0.0;
 	float deviation = 0.0;
 
+	/* calculate error mean */
 	int i;
 	for (i = 0; i < d_tst->num_samples; i++) {
 		err[i] = factors->a*d_tst->x_data[i] + factors->b - d_tst->t_data[i];
@@ -32,13 +33,65 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 	}
 	err_mean = err_mean/(float)d_tst->num_samples;
 
+	/* calculate deviation */
 	for (i = 0; i < d_tst->num_samples; i++) {
-		deviation += pow((err[i] - err_mean), 2)
+		deviation += pow((err[i] - err_mean), 2);
 	}
 	deviation = sqrt(deviation/(float)d_tst->num_samples);
 
-	float Vmin = (-3*deviation);
-	float Vmax = 3*deviation;
+	/* sort err values into bins  */
+	float Vmin = err_mean - 3*deviation;
+	float Vmax = err_mean + 3*deviation;
+	float bin_width = (Vmax - Vmin)/(float)NUM_BIN;
+
+	int bin_arr[NUM_BIN];
+	float pillar_arr[NUM_BIN+1];
+
+	// Initialize bin array
+	for (i = 0; i < NUM_BIN; i++) {
+		bin_arr[i] = 0;
+	}
+
+	// Inittialize pillar array
+	pillar_arr[0] = Vmin;
+	pillar_arr[NUM_BIN] = Vmax;
+	for (i = 1; i <= NUM_BIN-1; i++) {
+		pillar_arr[i] = Vmin + i*bin_width;
+	}
+
+	// collect and sort into bin array
+	int all_err_in_bin = 0;
+	int pA, pB, ptmp;
+	for (i = 0; i < d_tst->num_samples; i++) {
+		if (err[i] >= Vmin && err[i] <= Vmax) {
+			all_err_in_bin++;
+			pA = 0;
+			pB = NUM_BIN;
+			ptmp = 0;
+			while ((pB - pA) > 1) {
+				ptmp = (pB+pA)/2;
+				if (err[i] >= pillar_arr[ptmp]) {
+					pA = ptmp;
+					if (err[i] == pillar_arr[ptmp]) {
+						break;
+					}
+				} else {
+					pB = ptmp;
+				}
+			}
+			bin_arr[pA]++;
+		}
+	}
+
+	if (!all_err_in_bin) {
+		DEBUG("sort err failed\n");
+		return DATA_FATAL;
+	}
+
+	/* calculate histogram */
+	for (i = 0; i < NUM_BIN; i++) {
+		his_data[i] = (float)bin_arr[i]/(float)all_err_in_bin;
+	}
 }
 
 errno_t gradient_descent(factors_t *sp, const int num_iters, const float lrn_rate, const data_samples_t *d_trn) {
@@ -95,7 +148,7 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 	// num samples of last fold
 	int samples_of_lfold = din->data_samples.num_samples - (samples_of_fold * (din->trn_params.num_folds - 1));
 
-	int i;
+	int i, j;
 	for (i = 1; i <= din->trn_params.num_folds; i++) {
 		d_tst.num_samples = (i==din->trn_params.num_folds) ? samples_of_lfold : samples_of_fold;
 		d_trn.num_samples = din->data_samples.num_samples - d_tst.num_samples;
@@ -119,11 +172,19 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 		gradient_descent(&sp, din->trn_params.num_iters, din->trn_params.learning_rate, &d_trn);
 		dout->lrning_oput[i-1].factors.a = sp.a;
 		dout->lrning_oput[i-1].factors.b = sp.b;
-		DEBUG("ftors: %f, %f\n", sp.a, sp.b);
 
 		// calculate forecast error mean
 		forecast_err_mean(&d_tst, &sp, &fem);
 		dout->lrning_oput[i-1].fcast_err_mean = fem;
-		DEBUG("fem: %f\n", fem);
+
+		// get histogram
+		dout->lrning_oput[i-1].histogram = (float*) malloc(sizeof(float)*NUM_BIN);
+		histogram(&d_tst, &sp, dout->lrning_oput->histogram);
+
+		DEBUG("i=%d, %f %f %f ", i, sp.a, sp.b, fem);
+		for (j = 0; j < NUM_BIN-1; j++) {
+			DEBUG("%f ", dout->lrning_oput->histogram[j]);
+		}
+		DEBUG("%f\n", dout->lrning_oput->histogram[NUM_BIN]);
 	}
 }

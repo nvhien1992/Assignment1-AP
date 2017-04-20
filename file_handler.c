@@ -136,7 +136,7 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 		DEBUG("%f %f\n", data_in_s->data_samples.x_data[i], data_in_s->data_samples.t_data[i]);
 	}
 
-	return retval;
+	return runcmd_shell("rm -f .params.tmp .data.tmp");
 }
 
 errno_t writer(const char *fo_path, data_output_t *data_out_s) {
