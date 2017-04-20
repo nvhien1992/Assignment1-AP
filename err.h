@@ -11,6 +11,7 @@ typedef enum {
 	OPEN_FILE_FAILED,
 	PARSE_FAILED,
 	DATA_FATAL,
+	OUT_OF_MEM,
 } errno_t;
 
 #endif //__ERR_H

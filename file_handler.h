@@ -7,7 +7,7 @@
 #include "err.h"
 #include "data_structures.h"
 
-errno_t parser(const char *fi_path, data_input_t *data_in_s);
-errno_t writer(const char *fo_path, data_output_t *data_out_s);
+errno_t parser(const char *fi_path, data_input_t *din);
+errno_t writer(const char *fo_path, data_output_t *dout);
 
 #endif //__FILE_HANDLER_H

@@ -134,39 +134,46 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 
 	dout->num_outputs = din->trn_params.num_folds;
 	dout->lrning_oput = (learning_output_t*) malloc(sizeof(learning_output_t)*dout->num_outputs);
-
-	float fem = 0.0;
-	factors_t sp;
-	data_samples_t d_trn, d_tst;
-	d_trn.x_data = NULL;
-	d_trn.t_data = NULL;
-	d_tst.x_data = NULL;
-	d_tst.t_data = NULL;
+	if (!dout->lrning_oput) {
+		return OUT_OF_MEM;
+	}
 
 	// num samples of first (k-1) folds
 	int samples_of_fold = din->data_samples.num_samples / din->trn_params.num_folds;
 	// num samples of last fold
 	int samples_of_lfold = din->data_samples.num_samples - (samples_of_fold * (din->trn_params.num_folds - 1));
 
+	float fem = 0.0;
+	factors_t sp;
+	data_samples_t d_trn, d_tst;
+	int size_in_bytes = 0;
 	int i, j;
 	for (i = 1; i <= din->trn_params.num_folds; i++) {
 		d_tst.num_samples = (i==din->trn_params.num_folds) ? samples_of_lfold : samples_of_fold;
 		d_trn.num_samples = din->data_samples.num_samples - d_tst.num_samples;
 		d_tst.x_data = &din->data_samples.x_data[(i-1)*samples_of_fold];
 		d_tst.t_data = &din->data_samples.t_data[(i-1)*samples_of_fold];
-		d_trn.x_data = (float*) realloc(d_trn.x_data, sizeof(float)*d_trn.num_samples);
-		d_trn.t_data = (float*) realloc(d_trn.t_data, sizeof(float)*d_trn.num_samples);
+
+		size_in_bytes = sizeof(float)*d_trn.num_samples;
+		d_trn.x_data = (float*) malloc(size_in_bytes);
+		d_trn.t_data = (float*) malloc(size_in_bytes);
+		if (!d_trn.x_data || !d_trn.t_data) {
+			return OUT_OF_MEM;
+		}
 		if (i == 1) {
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[d_tst.num_samples], sizeof(float)*d_trn.num_samples);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[d_tst.num_samples], sizeof(float)*d_trn.num_samples);
+			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[d_tst.num_samples], size_in_bytes);
+			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[d_tst.num_samples], size_in_bytes);
 		} else if (i == din->trn_params.num_folds) {
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], sizeof(float)*d_trn.num_samples);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], sizeof(float)*d_trn.num_samples);
+			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], size_in_bytes);
+			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], size_in_bytes);
 		} else {
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], sizeof(float)*(i-1)*samples_of_fold);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], sizeof(float)*(i-1)*samples_of_fold);
-			memcpy(&d_trn.x_data[(i-1)*samples_of_fold], &din->data_samples.x_data[i*d_tst.num_samples], sizeof(float)*(din->data_samples.num_samples-i*samples_of_fold));
-			memcpy(&d_trn.t_data[(i-1)*samples_of_fold], &din->data_samples.t_data[i*d_tst.num_samples], sizeof(float)*(din->data_samples.num_samples-i*samples_of_fold));
+			size_in_bytes = sizeof(float)*(i-1)*samples_of_fold;
+			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], size_in_bytes);
+			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], size_in_bytes);
+
+			size_in_bytes = sizeof(float)*(din->data_samples.num_samples-i*samples_of_fold);
+			memcpy(&d_trn.x_data[(i-1)*samples_of_fold], &din->data_samples.x_data[i*d_tst.num_samples], size_in_bytes);
+			memcpy(&d_trn.t_data[(i-1)*samples_of_fold], &din->data_samples.t_data[i*d_tst.num_samples], size_in_bytes);
 		}
 		// calculate factors a, b
 		gradient_descent(&sp, din->trn_params.num_iters, din->trn_params.learning_rate, &d_trn);
@@ -179,20 +186,14 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 
 		// get histogram
 		dout->lrning_oput[i-1].histogram = (float*) malloc(sizeof(float)*NUM_BIN);
-		histogram(&d_tst, &sp, dout->lrning_oput->histogram);
+		histogram(&d_tst, &sp, dout->lrning_oput[i-1].histogram);
 
 		DEBUG("i=%d, %f %f %f ", i, sp.a, sp.b, fem);
 		for (j = 0; j < NUM_BIN-1; j++) {
 			DEBUG("%f ", dout->lrning_oput[i-1].histogram[j]);
 		}
 		DEBUG("%f\n", dout->lrning_oput[i-1].histogram[NUM_BIN]);
-	}
-
-	if (d_trn.x_data) {
 		free(d_trn.x_data);
-	}
-
-	if (d_trn.t_data) {
 		free(d_trn.t_data);
 	}
 

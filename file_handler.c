@@ -90,10 +90,10 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	return SUCCESS;
 }
 
-errno_t parser(const char *fi_path, data_input_t *data_in_s) {
+errno_t parser(const char *fi_path, data_input_t *din) {
 	errno_t retval = SUCCESS;
 
-	if (!fi_path || !data_in_s) {
+	if (!fi_path || !din) {
 		return PARAM_INVALID;
 	}
 
@@ -128,17 +128,17 @@ errno_t parser(const char *fi_path, data_input_t *data_in_s) {
 		return retval;
 	}
 
-	get_params(".params.tmp", &data_in_s->trn_params);
-	DEBUG("learning_rate: %.3f\n", data_in_s->trn_params.learning_rate);
-	get_data_samples(".data.tmp", &data_in_s->data_samples);
+	get_params(".params.tmp", &din->trn_params);
+	DEBUG("learning_rate: %.3f\n", din->trn_params.learning_rate);
+	get_data_samples(".data.tmp", &din->data_samples);
 	int i = 0;
 	for (i = 0; i < 10; i++) {
-		DEBUG("%f %f\n", data_in_s->data_samples.x_data[i], data_in_s->data_samples.t_data[i]);
+		DEBUG("%f %f\n", din->data_samples.x_data[i], din->data_samples.t_data[i]);
 	}
 
 	return runcmd_shell("rm -f .params.tmp .data.tmp");
 }
 
-errno_t writer(const char *fo_path, data_output_t *data_out_s) {
+errno_t writer(const char *fo_path, data_output_t *dout) {
 
 }
