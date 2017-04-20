@@ -183,8 +183,18 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 
 		DEBUG("i=%d, %f %f %f ", i, sp.a, sp.b, fem);
 		for (j = 0; j < NUM_BIN-1; j++) {
-			DEBUG("%f ", dout->lrning_oput->histogram[j]);
+			DEBUG("%f ", dout->lrning_oput[i-1].histogram[j]);
 		}
-		DEBUG("%f\n", dout->lrning_oput->histogram[NUM_BIN]);
+		DEBUG("%f\n", dout->lrning_oput[i-1].histogram[NUM_BIN]);
 	}
+
+	if (d_trn.x_data) {
+		free(d_trn.x_data);
+	}
+
+	if (d_trn.t_data) {
+		free(d_trn.t_data);
+	}
+
+	return SUCCESS;
 }
