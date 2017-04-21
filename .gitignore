@@ -2,4 +2,6 @@
 *.out
 *.tmp
 *.gch
+*.bin
+*.output*
 tags
