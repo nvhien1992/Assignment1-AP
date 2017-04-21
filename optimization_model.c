@@ -196,7 +196,7 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 		for (j = 0; j < NUM_BIN-1; j++) {
 			DEBUG("%f ", dout->lrning_oput[i-1].histogram[j]);
 		}
-		DEBUG("%f\n", dout->lrning_oput[i-1].histogram[NUM_BIN]);
+		DEBUG("%f\n", dout->lrning_oput[i-1].histogram[NUM_BIN-1]);
 		free(d_trn.x_data);
 		free(d_trn.t_data);
 	}
