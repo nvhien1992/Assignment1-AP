@@ -155,16 +155,15 @@ errno_t writer(const char *fo_path, const data_output_t *dout) {
 		return OPEN_FILE_FAILED;
 	}
 
-	fprintf(fp, output_panel);
+	fputs(output_panel, fp);
 	int i, j;
 	for (i = 0; i < dout->num_outputs; i++) {
-		fprintf(fp, "%7f %7f %7f ", dout->lrning_oput[i].factors.a, dout->lrning_oput[i].factors.b, dout->lrning_oput[i].fcast_err_mean);
-		for (j = 0; j < dout->lrning_oput[i].num_bin-1; i++) {
-			fprintf(fp, "%f ", dout->lrning_oput[i].histogram[j]);
+		fprintf(fp, "%3.3f %3.3f %3.3f ", dout->lrning_oput[i].factors.a, dout->lrning_oput[i].factors.b, dout->lrning_oput[i].fcast_err_mean);
+		for (j = 0; j < dout->lrning_oput[i].num_bin-1; j++) {
+			fprintf(fp, "%3.3f ", dout->lrning_oput[i].histogram[j]);
 		}
-		fprintf(fp, "%f\n", dout->lrning_oput[i].histogram[dout->lrning_oput[i].num_bin-1]);
+		fprintf(fp, "%3.3f\n", dout->lrning_oput[i].histogram[j]);
 	}
 	fclose(fp);
 	return SUCCESS;
 }
-
