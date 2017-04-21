@@ -38,6 +38,7 @@ typedef struct {
 	factors_t factors;
 	float fcast_err_mean;
 	float *histogram;
+	int num_bin;
 } learning_output_t;
 
 typedef struct {

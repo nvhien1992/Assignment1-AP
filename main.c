@@ -11,5 +11,7 @@ int main(int argc, char **argv) {
 
 	validate_model(&din, &dout);
 
+	writer("assignment1.output.txt", &dout);
+
 	return 0;
 }

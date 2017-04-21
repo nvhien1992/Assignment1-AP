@@ -8,6 +8,6 @@
 #include "data_structures.h"
 
 errno_t parser(const char *fi_path, data_input_t *din);
-errno_t writer(const char *fo_path, data_output_t *dout);
+errno_t writer(const char *fo_path, const data_output_t *dout);
 
 #endif //__FILE_HANDLER_H

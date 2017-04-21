@@ -3,6 +3,10 @@
 #define DEBUG_EN 1
 #include "dbg.h"
 
+const char *output_panel = "_________________________________________________________________________________\n"
+			   "Output of the validation\n"
+                           "_________________________________________________________________________________\n";
+
 static errno_t runcmd_shell(const char *format, ...);
 static errno_t get_params(const char *file, train_params_t *params);
 static errno_t get_data_samples(const char *file, data_samples_t *data);
@@ -139,6 +143,28 @@ errno_t parser(const char *fi_path, data_input_t *din) {
 	return runcmd_shell("rm -f .params.tmp .data.tmp");
 }
 
-errno_t writer(const char *fo_path, data_output_t *dout) {
+errno_t writer(const char *fo_path, const data_output_t *dout) {
+	if (!fo_path || !dout) {
+		return PARAM_INVALID;
+	}
 
+	FILE *fp;
+
+	fp = fopen(fo_path, "w");
+	if (!fp) {
+		return OPEN_FILE_FAILED;
+	}
+
+	fprintf(fp, output_panel);
+	int i, j;
+	for (i = 0; i < dout->num_outputs; i++) {
+		fprintf(fp, "%7f %7f %7f ", dout->lrning_oput[i].factors.a, dout->lrning_oput[i].factors.b, dout->lrning_oput[i].fcast_err_mean);
+		for (j = 0; j < dout->lrning_oput[i].num_bin-1; i++) {
+			fprintf(fp, "%f ", dout->lrning_oput[i].histogram[j]);
+		}
+		fprintf(fp, "%f\n", dout->lrning_oput[i].histogram[dout->lrning_oput[i].num_bin-1]);
+	}
+	fclose(fp);
+	return SUCCESS;
 }
+

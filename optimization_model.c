@@ -5,7 +5,7 @@
 #define DEBUG_EN 1
 #include "dbg.h"
 
-static const int NUM_BIN=10;
+static const int NUM_BIN = 10;
 
 static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em);
 
@@ -137,6 +137,7 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 	if (!dout->lrning_oput) {
 		return OUT_OF_MEM;
 	}
+	
 
 	// num samples of first (k-1) folds
 	int samples_of_fold = din->data_samples.num_samples / din->trn_params.num_folds;
@@ -175,6 +176,9 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 			memcpy(&d_trn.x_data[(i-1)*samples_of_fold], &din->data_samples.x_data[i*d_tst.num_samples], size_in_bytes);
 			memcpy(&d_trn.t_data[(i-1)*samples_of_fold], &din->data_samples.t_data[i*d_tst.num_samples], size_in_bytes);
 		}
+
+		dout->lrning_oput[i-1].num_bin = NUM_BIN;
+
 		// calculate factors a, b
 		gradient_descent(&sp, din->trn_params.num_iters, din->trn_params.learning_rate, &d_trn);
 		dout->lrning_oput[i-1].factors.a = sp.a;
