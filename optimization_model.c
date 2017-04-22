@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include "common.h"
 #include "optimization_model.h"
 
 #define DEBUG_EN 1
@@ -84,7 +85,7 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 	}
 
 	if (!all_err_in_bin) {
-		DEBUG("sort err failed\n");
+		DEBUG("sort err_data failed\n");
 		return DATA_FATAL;
 	}
 
@@ -157,10 +158,14 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 
 		size_in_bytes = sizeof(float)*d_trn.num_samples;
 		d_trn.x_data = (float*) malloc(size_in_bytes);
-		d_trn.t_data = (float*) malloc(size_in_bytes);
-		if (!d_trn.x_data || !d_trn.t_data) {
+		if (!d_trn.x_data) {
 			return OUT_OF_MEM;
 		}
+		d_trn.t_data = (float*) malloc(size_in_bytes);
+		if (!d_trn.x_data) {
+			return OUT_OF_MEM;
+		}
+
 		if (i == 1) {
 			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[d_tst.num_samples], size_in_bytes);
 			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[d_tst.num_samples], size_in_bytes);
@@ -197,8 +202,10 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 			DEBUG("%f ", dout->lrning_oput[i-1].histogram[j]);
 		}
 		DEBUG("%f\n", dout->lrning_oput[i-1].histogram[NUM_BIN-1]);
-		free(d_trn.x_data);
-		free(d_trn.t_data);
+
+		// free all tmp buffer
+		FREE(d_trn.x_data);
+		FREE(d_trn.t_data);
 	}
 
 	return SUCCESS;

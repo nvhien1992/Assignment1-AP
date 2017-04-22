@@ -68,6 +68,9 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	// allocate mem for x_data and t_data
 	data->x_data = (float*) malloc(sizeof(float)*num_samples);
 	data->t_data = (float*) malloc(sizeof(float)*num_samples);
+	if (!data->x_data || !data->t_data) {
+		return OUT_OF_MEM;
+	}
 
 	num_samples = 0;
 	while (fscanf(fp, "%f\n", &data->x_data[num_samples]) != 0) {
