@@ -157,12 +157,21 @@ errno_t writer(const char *fo_path, const data_output_t *dout) {
 
 	fputs(output_panel, fp);
 	int i, j;
+	char str[8];
 	for (i = 0; i < dout->num_outputs; i++) {
-		fprintf(fp, "%3.3f %3.3f %3.3f ", dout->lrning_oput[i].factors.a, dout->lrning_oput[i].factors.b, dout->lrning_oput[i].fcast_err_mean);
+		sprintf(str, "%.3f", dout->lrning_oput[i].factors.a);
+		fprintf(fp, "%7s", str);
+		sprintf(str, "%.3f", dout->lrning_oput[i].factors.b);
+		fprintf(fp, "%7s", str);
+		sprintf(str, "%.3f", dout->lrning_oput[i].fcast_err_mean);
+		fprintf(fp, "%7s", str);
+		
 		for (j = 0; j < dout->lrning_oput[i].num_bin-1; j++) {
-			fprintf(fp, "%3.3f ", dout->lrning_oput[i].histogram[j]);
+			sprintf(str, "%.3f", dout->lrning_oput[i].histogram[j]);
+			fprintf(fp, "%7s", str);
 		}
-		fprintf(fp, "%3.3f\n", dout->lrning_oput[i].histogram[j]);
+		sprintf(str, "%.3f", dout->lrning_oput[i].histogram[j]);
+		fprintf(fp, "%7s\n", str);
 	}
 	fclose(fp);
 	return SUCCESS;
