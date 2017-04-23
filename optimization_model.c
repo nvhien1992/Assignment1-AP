@@ -8,9 +8,54 @@
 
 static const int NUM_BIN = 10;
 
+static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn, data_samples_t *d_tst);
+
 static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em);
 
 static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, float *his_data);
+
+static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn, data_samples_t *d_tst) {
+	int size_in_bytes = 0;
+	// num samples of first (k-1) folds
+	int samples_of_fold = din->data_samples.num_samples / din->trn_params.num_folds;
+	// num samples of last fold
+	int samples_of_lfold = din->data_samples.num_samples - (samples_of_fold * (din->trn_params.num_folds - 1));
+
+	d_tst->num_samples = (k==din->trn_params.num_folds) ? samples_of_lfold : samples_of_fold;
+	d_trn->num_samples = din->data_samples.num_samples - d_tst->num_samples;
+
+	// only allocate buffer for training data buffer
+	d_tst->x_data = &din->data_samples.x_data[(k-1)*samples_of_fold];
+	d_tst->t_data = &din->data_samples.t_data[(k-1)*samples_of_fold];
+
+	size_in_bytes = sizeof(float)*d_trn->num_samples;
+	d_trn->x_data = (float*) malloc(size_in_bytes);
+	if (!d_trn->x_data) {
+		return OUT_OF_MEM;
+	}
+	d_trn->t_data = (float*) malloc(size_in_bytes);
+	if (!d_trn->x_data) {
+		return OUT_OF_MEM;
+	}
+
+	if (k == 1) {
+		memcpy(&d_trn->x_data[0], &din->data_samples.x_data[d_tst->num_samples], size_in_bytes);
+		memcpy(&d_trn->t_data[0], &din->data_samples.t_data[d_tst->num_samples], size_in_bytes);
+	} else if (k == din->trn_params.num_folds) {
+		memcpy(&d_trn->x_data[0], &din->data_samples.x_data[0], size_in_bytes);
+		memcpy(&d_trn->t_data[0], &din->data_samples.t_data[0], size_in_bytes);
+	} else {
+		size_in_bytes = sizeof(float)*(k-1)*samples_of_fold;
+		memcpy(&d_trn->x_data[0], &din->data_samples.x_data[0], size_in_bytes);
+		memcpy(&d_trn->t_data[0], &din->data_samples.t_data[0], size_in_bytes);
+
+		size_in_bytes = sizeof(float)*(din->data_samples.num_samples-k*samples_of_fold);
+		memcpy(&d_trn->x_data[(k-1)*samples_of_fold], &din->data_samples.x_data[k*d_tst->num_samples], size_in_bytes);
+		memcpy(&d_trn->t_data[(k-1)*samples_of_fold], &din->data_samples.t_data[k*d_tst->num_samples], size_in_bytes);
+	}
+
+	return SUCCESS;
+}
 
 static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em) {
 	float sum_err = 0.0;
@@ -19,6 +64,8 @@ static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *f
 		sum_err += pow((factors->a * d_tst->x_data[i] + factors->b - d_tst->t_data[i]), 2);
 	}
 	*fcast_em = sqrt(sum_err/(float)d_tst->num_samples);
+
+	return SUCCESS;
 }
 
 static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, float *his_data) {
@@ -93,6 +140,8 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 	for (i = 0; i < NUM_BIN; i++) {
 		his_data[i] = (float)bin_arr[i]/(float)all_err_in_bin;
 	}
+
+	return SUCCESS;
 }
 
 errno_t gradient_descent(factors_t *sp, const int num_iters, const float lrn_rate, const data_samples_t *d_trn) {
@@ -138,54 +187,24 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 	if (!dout->lrning_oput) {
 		return OUT_OF_MEM;
 	}
-	
 
-	// num samples of first (k-1) folds
-	int samples_of_fold = din->data_samples.num_samples / din->trn_params.num_folds;
-	// num samples of last fold
-	int samples_of_lfold = din->data_samples.num_samples - (samples_of_fold * (din->trn_params.num_folds - 1));
-
+	errno_t rv;
 	float fem = 0.0;
 	factors_t sp;
 	data_samples_t d_trn, d_tst;
-	int size_in_bytes = 0;
 	int i, j;
 	for (i = 1; i <= din->trn_params.num_folds; i++) {
 		// reset startpoint
 		sp.a = 0.0;
 		sp.b = 0.0;
-		d_tst.num_samples = (i==din->trn_params.num_folds) ? samples_of_lfold : samples_of_fold;
-		d_trn.num_samples = din->data_samples.num_samples - d_tst.num_samples;
-		d_tst.x_data = &din->data_samples.x_data[(i-1)*samples_of_fold];
-		d_tst.t_data = &din->data_samples.t_data[(i-1)*samples_of_fold];
-
-		size_in_bytes = sizeof(float)*d_trn.num_samples;
-		d_trn.x_data = (float*) malloc(size_in_bytes);
-		if (!d_trn.x_data) {
-			return OUT_OF_MEM;
-		}
-		d_trn.t_data = (float*) malloc(size_in_bytes);
-		if (!d_trn.x_data) {
-			return OUT_OF_MEM;
-		}
-
-		if (i == 1) {
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[d_tst.num_samples], size_in_bytes);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[d_tst.num_samples], size_in_bytes);
-		} else if (i == din->trn_params.num_folds) {
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], size_in_bytes);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], size_in_bytes);
-		} else {
-			size_in_bytes = sizeof(float)*(i-1)*samples_of_fold;
-			memcpy(&d_trn.x_data[0], &din->data_samples.x_data[0], size_in_bytes);
-			memcpy(&d_trn.t_data[0], &din->data_samples.t_data[0], size_in_bytes);
-
-			size_in_bytes = sizeof(float)*(din->data_samples.num_samples-i*samples_of_fold);
-			memcpy(&d_trn.x_data[(i-1)*samples_of_fold], &din->data_samples.x_data[i*d_tst.num_samples], size_in_bytes);
-			memcpy(&d_trn.t_data[(i-1)*samples_of_fold], &din->data_samples.t_data[i*d_tst.num_samples], size_in_bytes);
-		}
 
 		dout->lrning_oput[i-1].num_bin = NUM_BIN;
+
+		// get training data and testing data
+		if (rv = split_data(din, i, &d_trn, &d_tst) != SUCCESS) {
+			DEBUG("split data failed\n");
+			return rv;
+		}
 
 		// calculate factors a, b
 		gradient_descent(&sp, din->trn_params.num_iters, din->trn_params.learning_rate, &d_trn);
@@ -203,7 +222,10 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 			FREE(d_trn.t_data);
 			return OUT_OF_MEM;
 		}
-		histogram(&d_tst, &sp, dout->lrning_oput[i-1].histogram);
+		if (rv = histogram(&d_tst, &sp, dout->lrning_oput[i-1].histogram) != SUCCESS) {
+			DEBUG("get histogram failed\n");
+			return rv;
+		}
 
 		DEBUG("i=%d, %f %f %f ", i, sp.a, sp.b, fem);
 		for (j = 0; j < NUM_BIN-1; j++) {

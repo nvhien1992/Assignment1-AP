@@ -7,6 +7,7 @@
 #include "err.h"
 #include "data_structures.h"
 
+errno_t runcmd_shell(const char *format, ...);
 errno_t parser(const char *fi_path, data_input_t *din);
 errno_t writer(const char *fo_path, const data_output_t *dout);
 

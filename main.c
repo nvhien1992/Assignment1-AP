@@ -24,19 +24,18 @@ int main(int argc, char **argv) {
 	data_output_t dout;
 
 	if (rv = parser(infile, &din) != SUCCESS) {
-		printf("err: %s\n", STR(rv));
 		goto out;
 	}
 
 	if (rv = validate_model(&din, &dout) != SUCCESS) {
-		printf("err: %s\n", STR(rv));
 		goto out;
 	}
 
 	if (rv = writer(outfile, &dout) != SUCCESS) {
-		printf("err: %s\n", STR(rv));
 		goto out;
 	}
+
+	runcmd_shell("cat %s", outfile);
 
 out:
 	FREE(din.data_samples.x_data);

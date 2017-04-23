@@ -7,27 +7,8 @@ const char *output_panel = "____________________________________________________
 			   "Output of the validation\n"
                            "_________________________________________________________________________________\n";
 
-static errno_t runcmd_shell(const char *format, ...);
 static errno_t get_params(const char *file, train_params_t *params);
 static errno_t get_data_samples(const char *file, data_samples_t *data);
-
-static errno_t runcmd_shell(const char *format, ...) {
-	char cmd_buff[1024];
-	va_list args;
-
-	va_start(args, format);
-	if (vsprintf(cmd_buff, format, args) < 0) {
-		return CMD_FAILED;
-	}
-	va_end(args);
-
-	if (system(cmd_buff) < 0) {
-		return CMD_FAILED;
-	}
-
-	return SUCCESS;
-}
-
 
 static errno_t get_params(const char *file, train_params_t *params) {
 	FILE *fp;
@@ -94,6 +75,23 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	}
 
 	fclose(fp);
+	return SUCCESS;
+}
+
+errno_t runcmd_shell(const char *format, ...) {
+	char cmd_buff[1024];
+	va_list args;
+
+	va_start(args, format);
+	if (vsprintf(cmd_buff, format, args) < 0) {
+		return CMD_FAILED;
+	}
+	va_end(args);
+
+	if (system(cmd_buff) < 0) {
+		return CMD_FAILED;
+	}
+
 	return SUCCESS;
 }
 
