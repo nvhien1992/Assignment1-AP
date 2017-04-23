@@ -101,8 +101,8 @@ errno_t gradient_descent(factors_t *sp, const int num_iters, const float lrn_rat
 	}
 
 	grad_vector_t gv;
-	gv.ga = 0.0f;
-	gv.gb = 0.0f;
+	gv.ga = 0.0;
+	gv.gb = 0.0;
 
 	float module_gv = 0.0;
 
@@ -151,6 +151,9 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 	int size_in_bytes = 0;
 	int i, j;
 	for (i = 1; i <= din->trn_params.num_folds; i++) {
+		// reset startpoint
+		sp.a = 0.0;
+		sp.b = 0.0;
 		d_tst.num_samples = (i==din->trn_params.num_folds) ? samples_of_lfold : samples_of_fold;
 		d_trn.num_samples = din->data_samples.num_samples - d_tst.num_samples;
 		d_tst.x_data = &din->data_samples.x_data[(i-1)*samples_of_fold];
@@ -195,6 +198,11 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 
 		// get histogram
 		dout->lrning_oput[i-1].histogram = (float*) malloc(sizeof(float)*NUM_BIN);
+		if (!dout->lrning_oput[i-1].histogram) {
+			FREE(d_trn.x_data);
+			FREE(d_trn.t_data);
+			return OUT_OF_MEM;
+		}
 		histogram(&d_tst, &sp, dout->lrning_oput[i-1].histogram);
 
 		DEBUG("i=%d, %f %f %f ", i, sp.a, sp.b, fem);

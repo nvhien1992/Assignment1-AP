@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define STR(ptr_name)	#ptr_name
+#define STR(name)	#name
 #define FREE(ptr)	{if(ptr) free(ptr);}
 
 #endif //__COMMON_H
