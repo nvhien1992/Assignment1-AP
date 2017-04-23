@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for i in `seq 0 5`; do
+	./assignment1.bin "data.$i.txt" "std.$i.txt"
+done

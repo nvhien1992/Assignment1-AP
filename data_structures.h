@@ -6,21 +6,21 @@
 
 // data structures for input
 typedef struct {
-	float a;
-	float b;
+	double a;
+	double b;
 } factors_t;
 
 typedef struct {
 	int num_iters;
-	float learning_rate;
+	double learning_rate;
 	factors_t start_point;
 	int num_folds;
 } train_params_t;
 
 typedef struct {
 	int num_samples;
-	float *x_data;
-	float *t_data;
+	double *x_data;
+	double *t_data;
 } data_samples_t;
 
 typedef struct {
@@ -30,14 +30,14 @@ typedef struct {
 
 //data structures for output
 typedef struct {
-	float ga;
-	float gb;
+	double ga;
+	double gb;
 } grad_vector_t;
 
 typedef struct {
 	factors_t factors;
-	float fcast_err_mean;
-	float *histogram;
+	double fcast_err_mean;
+	double *histogram;
 	int num_bin;
 } learning_output_t;
 

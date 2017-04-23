@@ -4,6 +4,7 @@
 #include "dbg.h"
 
 const char *prec_pattern = "%.5f";
+const int res_width = 10;
 const char *width_pattern = "%10s";
 
 static errno_t get_params(const char *file, train_params_t *params);
@@ -11,7 +12,7 @@ static errno_t get_data_samples(const char *file, data_samples_t *data);
 
 static errno_t get_params(const char *file, train_params_t *params) {
 	FILE *fp;
-	const char *pattern = "%d\n%f\n%f\n%f\n%d";
+	const char *pattern = "%d\n%lf\n%lf\n%lf\n%d";
 
 	fp = fopen(file, "r");
 	if (!fp) {
@@ -46,14 +47,14 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	data->num_samples = num_samples;
 
 	// allocate mem for x_data and t_data
-	data->x_data = (float*) malloc(sizeof(float)*num_samples);
-	data->t_data = (float*) malloc(sizeof(float)*num_samples);
+	data->x_data = (double*) malloc(sizeof(double)*num_samples);
+	data->t_data = (double*) malloc(sizeof(double)*num_samples);
 	if (!data->x_data || !data->t_data) {
 		return OUT_OF_MEM;
 	}
 
 	num_samples = 0;
-	while (fscanf(fp, "%f\n", &data->x_data[num_samples]) != 0) {
+	while (fscanf(fp, "%lf\n", &data->x_data[num_samples]) != 0) {
 		num_samples++;
 	}
 	if (num_samples != data->num_samples) {
@@ -62,7 +63,7 @@ static errno_t get_data_samples(const char *file, data_samples_t *data) {
 	}
 
 	num_samples = 0;
-	while (fscanf(fp, "%f\n", &data->t_data[num_samples]) != 0) {
+	while (fscanf(fp, "%lf\n", &data->t_data[num_samples]) != 0) {
 		num_samples++;
 		if (feof(fp)) {
 			break;
@@ -137,7 +138,7 @@ errno_t parser(const char *fi_path, data_input_t *din) {
 	get_data_samples(".data.tmp", &din->data_samples);
 	int i = 0;
 	for (i = 0; i < 10; i++) {
-		DEBUG("%f %f\n", din->data_samples.x_data[i], din->data_samples.t_data[i]);
+		DEBUG("%lf %lf\n", din->data_samples.x_data[i], din->data_samples.t_data[i]);
 	}
 
 	return runcmd_shell("rm -f .params.tmp .data.tmp");
@@ -156,7 +157,7 @@ errno_t writer(const char *fo_path, const data_output_t *dout) {
 	}
 
 	int i, j;
-	char str[8];
+	char str[res_width+1];
 	for (i = 0; i < dout->num_outputs; i++) {
 		sprintf(str, prec_pattern, dout->lrning_oput[i].factors.a);
 		fprintf(fp, width_pattern, str);

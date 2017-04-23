@@ -10,9 +10,9 @@ static const int NUM_BIN = 10;
 
 static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn, data_samples_t *d_tst);
 
-static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em);
+static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, double *fcast_em);
 
-static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, float *his_data);
+static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, double *his_data);
 
 static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn, data_samples_t *d_tst) {
 	int size_in_bytes = 0;
@@ -28,12 +28,12 @@ static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn,
 	d_tst->x_data = &din->data_samples.x_data[(k-1)*samples_of_fold];
 	d_tst->t_data = &din->data_samples.t_data[(k-1)*samples_of_fold];
 
-	size_in_bytes = sizeof(float)*d_trn->num_samples;
-	d_trn->x_data = (float*) malloc(size_in_bytes);
+	size_in_bytes = sizeof(double)*d_trn->num_samples;
+	d_trn->x_data = (double*) malloc(size_in_bytes);
 	if (!d_trn->x_data) {
 		return OUT_OF_MEM;
 	}
-	d_trn->t_data = (float*) malloc(size_in_bytes);
+	d_trn->t_data = (double*) malloc(size_in_bytes);
 	if (!d_trn->x_data) {
 		return OUT_OF_MEM;
 	}
@@ -45,11 +45,11 @@ static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn,
 		memcpy(&d_trn->x_data[0], &din->data_samples.x_data[0], size_in_bytes);
 		memcpy(&d_trn->t_data[0], &din->data_samples.t_data[0], size_in_bytes);
 	} else {
-		size_in_bytes = sizeof(float)*(k-1)*samples_of_fold;
+		size_in_bytes = sizeof(double)*(k-1)*samples_of_fold;
 		memcpy(&d_trn->x_data[0], &din->data_samples.x_data[0], size_in_bytes);
 		memcpy(&d_trn->t_data[0], &din->data_samples.t_data[0], size_in_bytes);
 
-		size_in_bytes = sizeof(float)*(din->data_samples.num_samples-k*samples_of_fold);
+		size_in_bytes = sizeof(double)*(din->data_samples.num_samples-k*samples_of_fold);
 		memcpy(&d_trn->x_data[(k-1)*samples_of_fold], &din->data_samples.x_data[k*d_tst->num_samples], size_in_bytes);
 		memcpy(&d_trn->t_data[(k-1)*samples_of_fold], &din->data_samples.t_data[k*d_tst->num_samples], size_in_bytes);
 	}
@@ -57,21 +57,21 @@ static errno_t split_data(const data_input_t *din, int k, data_samples_t *d_trn,
 	return SUCCESS;
 }
 
-static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, float *fcast_em) {
-	float sum_err = 0.0;
+static errno_t forecast_err_mean(const data_samples_t *d_tst, const factors_t *factors, double *fcast_em) {
+	long double sum_err = 0.0;
 	int i;
 	for (i = 0; i < d_tst->num_samples; i++) {
-		sum_err += pow((factors->a * d_tst->x_data[i] + factors->b - d_tst->t_data[i]), 2);
+		sum_err += (factors->a * d_tst->x_data[i] + factors->b - d_tst->t_data[i])*(factors->a * d_tst->x_data[i] + factors->b - d_tst->t_data[i]);
 	}
-	*fcast_em = sqrt(sum_err/(float)d_tst->num_samples);
+	*fcast_em = sqrt(sum_err/(double)d_tst->num_samples);
 
 	return SUCCESS;
 }
 
-static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, float *his_data) {
-	float err[d_tst->num_samples];
-	float err_mean = 0.0;
-	float deviation = 0.0;
+static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, double *his_data) {
+	double err[d_tst->num_samples];
+	double err_mean = 0.0;
+	double deviation = 0.0;
 
 	/* calculate error mean */
 	int i;
@@ -79,21 +79,21 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 		err[i] = factors->a*d_tst->x_data[i] + factors->b - d_tst->t_data[i];
 		err_mean += err[i];
 	}
-	err_mean = err_mean/(float)d_tst->num_samples;
+	err_mean = err_mean/(double)d_tst->num_samples;
 
 	/* calculate deviation */
 	for (i = 0; i < d_tst->num_samples; i++) {
 		deviation += pow((err[i] - err_mean), 2);
 	}
-	deviation = sqrt(deviation/(float)d_tst->num_samples);
+	deviation = sqrt(deviation/(double)d_tst->num_samples);
 
 	/* sort err values into bins  */
-	float Vmin = err_mean - 3*deviation;
-	float Vmax = err_mean + 3*deviation;
-	float bin_width = (Vmax - Vmin)/(float)NUM_BIN;
+	double Vmin = err_mean - 3*deviation;
+	double Vmax = err_mean + 3*deviation;
+	double bin_width = (Vmax - Vmin)/(double)NUM_BIN;
 
 	int bin_arr[NUM_BIN];
-	float pillar_arr[NUM_BIN+1];
+	double pillar_arr[NUM_BIN+1];
 
 	// Initialize bin array
 	for (i = 0; i < NUM_BIN; i++) {
@@ -138,39 +138,39 @@ static errno_t histogram(const data_samples_t *d_tst, const factors_t *factors, 
 
 	/* calculate histogram */
 	for (i = 0; i < NUM_BIN; i++) {
-		his_data[i] = (float)bin_arr[i]/(float)all_err_in_bin;
+		his_data[i] = (double)bin_arr[i]/(double)all_err_in_bin;
 	}
 
 	return SUCCESS;
 }
 
-errno_t gradient_descent(factors_t *sp, const int num_iters, const float lrn_rate, const data_samples_t *d_trn) {
+errno_t gradient_descent(factors_t *sp, const int num_iters, const double lrn_rate, const data_samples_t *d_trn) {
 	if (!sp || !d_trn) {
 		return PARAM_INVALID;
 	}
 
-	grad_vector_t gv;
-	gv.ga = 0.0;
-	gv.gb = 0.0;
-
-	float module_gv = 0.0;
+	double ga = 0.0;
+	double gb = 0.0;
+	double module_gv = 0.0;
 
 	int ni, idx;
 	for (ni = 0; ni < num_iters; ni++) {
+		ga = 0.0;
+		gb = 0.0;
 		for (idx = 0; idx < d_trn->num_samples; idx++) {
-			gv.ga += (sp->a * d_trn->x_data[idx] + sp->b - d_trn->t_data[idx]) * d_trn->x_data[idx];
-			gv.gb += sp->a * d_trn->x_data[idx] + sp->b - d_trn->t_data[idx];
+			ga += (sp->a * d_trn->x_data[idx] + sp->b - d_trn->t_data[idx]) * d_trn->x_data[idx];
+			gb += sp->a * d_trn->x_data[idx] + sp->b - d_trn->t_data[idx];
 		}
 		//DEBUG("grad: %.3f, %.3f\n", gv.ga, gv.gb);
 
 		//normalize grad vector
-		module_gv = sqrt(pow(gv.ga, 2) + pow(gv.gb, 2));
-		gv.ga = (float)gv.ga/(float)module_gv;
-		gv.gb = (float)gv.gb/(float)module_gv;
+		module_gv = sqrt(ga*ga + gb*gb);
+		ga = (double)ga/module_gv;
+		gb = (double)gb/module_gv;
 		//DEBUG("norm-grad: %f %f %f\n", module_gv, gv.ga, gv.gb);
 
-		sp->a = sp->a - lrn_rate * gv.ga;
-		sp->b = sp->b - lrn_rate * gv.gb;
+		sp->a = sp->a - lrn_rate * ga;
+		sp->b = sp->b - lrn_rate * gb;
 		//DEBUG("new startpoint: %f %f\n", sp->a, sp->b);
 	}
 
@@ -189,15 +189,11 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 	}
 
 	errno_t rv;
-	float fem = 0.0;
+	double fem = 0.0;
 	factors_t sp;
 	data_samples_t d_trn, d_tst;
 	int i, j;
 	for (i = 1; i <= din->trn_params.num_folds; i++) {
-		// reset startpoint
-		sp.a = 0.0;
-		sp.b = 0.0;
-
 		dout->lrning_oput[i-1].num_bin = NUM_BIN;
 
 		// get training data and testing data
@@ -207,6 +203,9 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 		}
 
 		// calculate factors a, b
+		// reset startpoint
+		sp.a = din->trn_params.start_point.a;
+		sp.b = din->trn_params.start_point.b;
 		gradient_descent(&sp, din->trn_params.num_iters, din->trn_params.learning_rate, &d_trn);
 		dout->lrning_oput[i-1].factors.a = sp.a;
 		dout->lrning_oput[i-1].factors.b = sp.b;
@@ -216,7 +215,7 @@ errno_t validate_model(const data_input_t *din, data_output_t *dout) {
 		dout->lrning_oput[i-1].fcast_err_mean = fem;
 
 		// get histogram
-		dout->lrning_oput[i-1].histogram = (float*) malloc(sizeof(float)*NUM_BIN);
+		dout->lrning_oput[i-1].histogram = (double*) malloc(sizeof(double)*NUM_BIN);
 		if (!dout->lrning_oput[i-1].histogram) {
 			FREE(d_trn.x_data);
 			FREE(d_trn.t_data);
