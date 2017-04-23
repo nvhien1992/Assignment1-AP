@@ -1,6 +1,6 @@
 #include "file_handler.h"
 
-#define DEBUG_EN 1
+#define DEBUG_EN 0
 #include "dbg.h"
 
 const char *prec_pattern = "%.5f";

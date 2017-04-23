@@ -3,7 +3,7 @@
 #include "common.h"
 #include "optimization_model.h"
 
-#define DEBUG_EN 1
+#define DEBUG_EN 0
 #include "dbg.h"
 
 static const int NUM_BIN = 10;
