@@ -3,9 +3,8 @@
 #define DEBUG_EN 1
 #include "dbg.h"
 
-const char *output_panel = "_________________________________________________________________________________\n"
-			   "Output of the validation\n"
-                           "_________________________________________________________________________________\n";
+const char *prec_pattern = "%.5f";
+const char *width_pattern = "%10s";
 
 static errno_t get_params(const char *file, train_params_t *params);
 static errno_t get_data_samples(const char *file, data_samples_t *data);
@@ -156,23 +155,23 @@ errno_t writer(const char *fo_path, const data_output_t *dout) {
 		return OPEN_FILE_FAILED;
 	}
 
-	fputs(output_panel, fp);
 	int i, j;
 	char str[8];
 	for (i = 0; i < dout->num_outputs; i++) {
-		sprintf(str, "%.3f", dout->lrning_oput[i].factors.a);
-		fprintf(fp, "%7s", str);
-		sprintf(str, "%.3f", dout->lrning_oput[i].factors.b);
-		fprintf(fp, "%7s", str);
-		sprintf(str, "%.3f", dout->lrning_oput[i].fcast_err_mean);
-		fprintf(fp, "%7s", str);
+		sprintf(str, prec_pattern, dout->lrning_oput[i].factors.a);
+		fprintf(fp, width_pattern, str);
+		sprintf(str, prec_pattern, dout->lrning_oput[i].factors.b);
+		fprintf(fp, width_pattern, str);
+		sprintf(str, prec_pattern, dout->lrning_oput[i].fcast_err_mean);
+		fprintf(fp, width_pattern, str);
 		
 		for (j = 0; j < dout->lrning_oput[i].num_bin-1; j++) {
-			sprintf(str, "%.3f", dout->lrning_oput[i].histogram[j]);
-			fprintf(fp, "%7s", str);
+			sprintf(str, prec_pattern, dout->lrning_oput[i].histogram[j]);
+			fprintf(fp, width_pattern, str);
 		}
-		sprintf(str, "%.3f", dout->lrning_oput[i].histogram[j]);
-		fprintf(fp, "%7s\n", str);
+		sprintf(str, prec_pattern, dout->lrning_oput[i].histogram[j]);
+		fprintf(fp, width_pattern, str);
+		fputs("\n", fp);
 	}
 	fclose(fp);
 	return SUCCESS;

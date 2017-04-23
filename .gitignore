@@ -3,5 +3,6 @@
 *.tmp
 *.gch
 *.bin
+*.txt
 *.output*
 tags
